@@ -1,0 +1,5 @@
+run0, 1 | lstm_hidden=64
+features = ['Scalar_B', 'BX_GSE_GSM', 'BY_GSE', 'BZ_GSE', 'BY_GSM', 'BZ_GSM', 'Proton_Density', 'SW_Plasma_Temperature', 'SW_Plasma_Speed']
+
+run2 | lstm_hidden=48
+features = ['Scalar_B', 'BZ_GSE', 'BZ_GSM', 'Proton_Density', 'SW_Plasma_Speed']

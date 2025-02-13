@@ -30,13 +30,15 @@ batch_size = int(args.batch_size)   # batch size
 learning_rate = float(args.lr)
 num_epochs = int(args.epochs)
 
+# -------------------------- Data Preparation --------------------------
+
 data = pd.read_csv('data/solar_wind_parameters_data_1_hourly_all.csv')
 
 data = data.drop(columns=['Unnamed: 0','Timestamp'])
 
 # data.head()
 
-features = ['Scalar_B', 'BX_GSE_GSM', 'BY_GSE', 'BZ_GSE', 'BY_GSM', 'BZ_GSM', 'Proton_Density', 'SW_Plasma_Temperature', 'SW_Plasma_Speed']
+features = ['Scalar_B', 'BZ_GSE', 'BZ_GSM', 'Proton_Density', 'SW_Plasma_Speed']
 target = ['Dst-index']
 
 # Select the features and target
@@ -73,11 +75,11 @@ test_data = TensorDataset(X_test, y_test)
 train_load = DataLoader(train_data, batch_size=batch_size, shuffle=False)
 test_load = DataLoader(test_data, batch_size=batch_size, shuffle=False)
 
-# --- Training the model ---
+# -------------------------- Training the model --------------------------
 
 if __name__ == "__main__":
     input_size = len(features)
-    hidden_layer_size = 64
+    hidden_layer_size = 48
     output_size = 1
     model = LSTM(input_size, hidden_layer_size, output_size).to(device)
     print(f'Model: {model} input_size: {input_size}, hidden_layer_size: {hidden_layer_size}, output_size: {output_size}')
@@ -98,7 +100,7 @@ if __name__ == "__main__":
             optimizer.zero_grad()
             y_pred = model(X_train)
 
-            loss = criterion(y_pred, y_train)
+            loss = criterion(y_pred.squeeze(-1), y_train)
             loss.backward()
             optimizer.step()
 
@@ -114,7 +116,7 @@ if __name__ == "__main__":
             for i, data in enumerate(test_load):
                 X_test, y_test = data
                 y_pred = model(X_test)
-                loss = criterion(y_pred, y_test)
+                loss = criterion(y_pred.squeeze(-1), y_test)
                 test_loss += loss.item()
         test_loss = test_loss / len(test_load)
         
@@ -130,7 +132,10 @@ if __name__ == "__main__":
                 'epoch': best_epoch,
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
-                'loss': best_loss
+                'loss': best_loss,
+                'input_size': input_size,
+                'hidden_layer_size': hidden_layer_size,
+                'output_size': output_size
             }
             torch.save(checkpoint, f'./{directory}/model{round(best_loss*10000)}.pth')
             torch.save(checkpoint, f'./{directory}/best_model.pth')
