@@ -31,7 +31,7 @@ class LSTMPredictor(nn.Module):
         h_t2 = torch.zeros(n_samples, self.n_hidden, dtype=torch.float32)
         c_t2 = torch.zeros(n_samples, self.n_hidden, dtype=torch.float32)
 
-        for input_t in x.split(x.size(1), dim=1):
+        for input_t in x.split(x.size(0), dim=1):
             h_t, c_t = self.lstm1(input_t, (h_t, c_t))
             h_t2, c_t2 = self.lstm2(h_t, (h_t2, c_t2))
             output = self.linear(h_t2)
