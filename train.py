@@ -17,10 +17,10 @@ print(device)
 
 parser = argparse.ArgumentParser(description='Add these argument for training')
 parser.add_argument('--dir', default='results', help='directory for saving trianed mode')
-parser.add_argument('--feature', required= True)
+# parser.add_argument('--feature', default='Scalar_B,BX_GSE_GSM,BY_GSE,BZ_GSE,BY_GSM,BZ_GSM,Proton_Density,SW_Plasma_Temperature,SW_Plasma_Speed', help='features for training')
 
-parser.add_argument('--lr', default=0.005, help='learning rate')
-parser.add_argument('--epochs', default=10, help='epoch number')
+parser.add_argument('--lr', default=0.0005, help='learning rate')
+parser.add_argument('--epochs', default=100, help='epoch number')
 parser.add_argument('--batch_size', default=32)
 args = parser.parse_args()
 
@@ -135,12 +135,12 @@ if __name__ == "__main__":
             torch.save(checkpoint, f'./{directory}/model{round(best_loss*10000)}.pth')
             torch.save(checkpoint, f'./{directory}/best_model.pth')
 
-            # Record results
-            rec.append({
-                'epoch': epoch + 1,
-                'train_loss': train_loss,
-                'test_loss': test_loss,
-            })
+        # Record results
+        rec.append({
+            'epoch': epoch + 1,
+            'train_loss': train_loss,
+            'test_loss': test_loss,
+        })
 
     # Write results to csv
     df = pd.DataFrame(rec)
