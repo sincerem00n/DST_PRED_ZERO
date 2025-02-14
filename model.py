@@ -14,11 +14,16 @@ class LSTM(nn.Module):
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     def forward(self, input_seq):
-        h0 = torch.zeros(self.lstm_layers, input_seq.size(0), self.hidden_layer_size).to(self.device)
-        c0 = torch.zeros(self.lstm_layers, input_seq.size(0), self.hidden_layer_size).to(self.device)
+        batch_size = input_seq.size(0)
+        
+        # Initialize hidden state only if not provided (to allow stateful training)
+        if hidden_state is None:
+            h0 = torch.zeros(self.lstm_layers, batch_size, self.hidden_layer_size).to(self.device)
+            c0 = torch.zeros(self.lstm_layers, batch_size, self.hidden_layer_size).to(self.device)
+        else:
+            h0, c0 = hidden_state
 
-        lstm_out, _ = self.lstm(input_seq, (h0, c0))
-        lstm_out = lstm_out[:,-1,:]
+        lstm_out, hidden_state = self.lstm(input_seq, (h0, c0))
 
         predictions = self.linear(lstm_out)
         return predictions
