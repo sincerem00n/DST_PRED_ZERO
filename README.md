@@ -1,7 +1,7 @@
 # DST_PRED_ZERO
 
 ## Project Overview
-DST_PRED_ZERO is a project focused on forecasting the Disturbance Storm Time (DST) Index using advanced data science techniques. The goal is to enhance space weather prediction by accurately forecasting geomagnetic storms.
+DST_PRED_ZERO is a project focused on forecasting the Disturbance Storm Time (DST) Index using deep learning. The goal is to enhance space weather prediction by accurately forecasting geomagnetic storms.
 
 ## Features
 - **Data Collection**: Aggregates data from various space weather sources.
