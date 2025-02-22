@@ -19,6 +19,9 @@ class LSTMModel(nn.Module):
 class CNN_LSTM(nn.Module):
     def __init__(self, input_size, hidden_size=64, num_layers=2, output_size=1):
         super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
         self.conv1 = nn.Conv1d(in_channels=input_size, out_channels=32, kernel_size=3, padding=1)
         self.lstm = nn.LSTM(32, hidden_size, num_layers=num_layers, batch_first=True)
         self.fc = nn.Linear(hidden_size, output_size)
