@@ -33,7 +33,7 @@ class CNN_LSTM(nn.Module):
         self.pool = nn.MaxPool1d(kernel_size=2, stride=2)
         
         self.lstm = nn.LSTM(32, hidden_size, num_layers=num_layers, batch_first=True)
-        self.dropout = nn.Dropout(0.4)
+        self.dropout = nn.Dropout(0.2)
         self.fc = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
