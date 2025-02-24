@@ -25,6 +25,7 @@ class CNN_LSTM(nn.Module):
         self.num_layers = num_layers
         self.conv1 = nn.Conv1d(in_channels=input_size, out_channels=32, kernel_size=3, padding=1)
         self.lstm = nn.LSTM(32, hidden_size, num_layers=num_layers, batch_first=True)
+        self.dropout = nn.Dropout(0.4)
         self.fc = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
@@ -32,7 +33,8 @@ class CNN_LSTM(nn.Module):
         x = torch.relu(self.conv1(x))
         x = x.permute(0, 2, 1)  # Convert back to (batch, time, channels)
         lstm_out, _ = self.lstm(x)
-        out = self.fc(lstm_out[:, -1, :])
+        x = self.dropout(lstm_out[:, -1, :])
+        out = self.fc(x)
         return out
     
 class DSTNET(nn.Module):
