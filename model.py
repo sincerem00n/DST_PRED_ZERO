@@ -23,15 +23,24 @@ class CNN_LSTM(nn.Module):
         self.input_size = input_size
         self.hidden_size = hidden_size
         self.num_layers = num_layers
-        self.conv1 = nn.Conv1d(in_channels=input_size, out_channels=32, kernel_size=3, padding=1)
+        
+        # CNN layer + Max Pooling
+        self.conv1 = nn.Conv1d(
+            in_channels=input_size, 
+            out_channels=32, 
+            kernel_size=3, 
+            padding=1)
+        self.pool = nn.MaxPool1d(kernel_size=2, stride=2)
+        
         self.lstm = nn.LSTM(32, hidden_size, num_layers=num_layers, batch_first=True)
         self.dropout = nn.Dropout(0.4)
         self.fc = nn.Linear(hidden_size, output_size)
 
     def forward(self, x):
-        x = x.permute(0, 2, 1)  # Convert to (batch, channels, time)
+        x = x.permute(0, 2, 1)  # Convert to (batch, features, time)
         x = torch.relu(self.conv1(x))
-        x = x.permute(0, 2, 1)  # Convert back to (batch, time, channels)
+        x = self.pool(x)
+        x = x.permute(0, 2, 1)  # Convert back to (batch, time, features)
         lstm_out, _ = self.lstm(x)
         x = self.dropout(lstm_out[:, -1, :])
         out = self.fc(x)
