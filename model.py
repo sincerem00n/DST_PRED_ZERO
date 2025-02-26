@@ -135,3 +135,67 @@ class LSTMNet(nn.Module):
         x = self.bn3(x)
         out = self.fc2(x)
         return out
+
+class CNN_LSTM_AR(nn.Module):
+    def __init__(self, input_size, hidden_size=64, num_layers=2, output_size=1):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        
+        # CNN
+        self.conv1 = nn.Conv1d(in_channels=input_size, out_channels=32, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv1d(in_channels=32, out_channels=32, kernel_size=3, padding=1)
+        # self.pool = nn.MaxPool1d(kernel_size=2, stride=2)
+
+        # LSTM layer
+        self.lstm = nn.LSTM(32, hidden_size, num_layers=num_layers, batch_first=True)
+        self.dropout = nn.Dropout(0.2)
+        self.fc = nn.Linear(hidden_size, output_size)
+
+        # Add an embedding layer to project 1D predictions back to input dimension
+        self.embedding = nn.Linear(output_size, input_size)
+
+    def forward(self, x, future_steps=1):
+        """
+        x: Input sequence (batch, time_steps, features)
+        future_steps: Number of future time steps to predict autoregressively
+        """
+        batch_size = x.size(0)
+        predictions = []
+
+        # Pass input through CNN
+        x = x.permute(0, 2, 1)  # Convert to (batch, features, time)
+        x = torch.relu(self.conv1(x))
+        x = torch.relu(self.conv2(x))
+        # x = self.pool(x)
+        x = x.permute(0, 2, 1)  # Convert back to (batch, time, features)
+
+        # Pass through LSTM
+        lstm_out, (h_n, c_n) = self.lstm(x)
+        x = self.dropout(lstm_out[:, -1, :])  # Get last time step
+        pred = self.fc(x)
+        predictions.append(pred)
+
+        # Autoregressive Prediction Loop
+        for _ in range(future_steps - 1):
+            pred_embedded = self.embedding(pred)  # (batch, input_size)
+            
+            # Prepare for CNN
+            pred_input = pred_embedded.unsqueeze(2)  # (batch, input_size, 1)
+            
+            # CNN pass
+            conv_out = torch.relu(self.conv1(pred_input))
+            conv_out = torch.relu(self.conv2(conv_out))
+            # pooled = self.pool(conv_out)
+            
+            # LSTM pass
+            lstm_in = conv_out.permute(0, 2, 1)  # (batch, time, features)
+            lstm_out, (h_n, c_n) = self.lstm(lstm_in, (h_n, c_n))
+            
+            # Generate new prediction
+            x = self.dropout(lstm_out[:, -1, :])
+            pred = self.fc(x)
+            predictions.append(pred)
+
+        return torch.stack(predictions, dim=1)  # (batch, future_steps, output_size)
