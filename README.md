@@ -1,4 +1,4 @@
-![image](https://github.com/user-attachments/assets/ae35c545-b334-4f69-8d7a-c1b95626c03a)# DST_PRED_ZERO
+# DST_PRED_ZERO
 
 ## Project Overview
 DST_PRED_ZERO is a project focused on forecasting the Disturbance Storm Time (DST) Index using deep learning. The goal is to enhance space weather prediction by accurately forecasting geomagnetic storms.
