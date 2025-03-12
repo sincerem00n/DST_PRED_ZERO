@@ -119,11 +119,6 @@ class DSTTModel:
                                         activity_regularizer=regularizers.l2(1e-5)                                      
                                      )(model)
                 model = layers.Dropout(dropout)(model)
-
-                # Solve rank problem
-                model = layers.Flatten()(model)
-                model = layers.Lambda(lambda y: tfp.layers.DenseVariational(100, self.posterior_mean_field, self.prior_trainable, kl_weight=kl_weight)(y), output_shape=(100,))(model)
-
                 model = (tfp.layers.DenseVariational(100, self.posterior_mean_field, self.prior_trainable, kl_weight=kl_weight))(model)
                 model = (layers.Dropout(dropout))(model)
                 model = layers.Dense(1,

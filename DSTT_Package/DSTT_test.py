@@ -49,7 +49,7 @@ from tensorflow import keras
 
 
 from DSTT_utils import *
-from DSTT_model import DSTTModel
+from DSTT_model import DSTTModel, DSTTModelV3
 
 
 interval_type = 'hourly'
@@ -69,7 +69,7 @@ os.makedirs(figures_dir,  exist_ok=True)
 
 def test(start_hour, end_hour,models_directory='models',results_dir='results', figures_dir='figures',show_figures=False):
     for k in range(start_hour,end_hour):
-        model = DSTTModel()
+        model = DSTTModelV3()
         print('Running testing for h =', k, 'hour ahead')
         num_hours = k
         max_r2 = -10000
