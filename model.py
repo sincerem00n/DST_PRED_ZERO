@@ -1,5 +1,21 @@
 import torch
 import torch.nn as nn
+import pyro
+import pyro.distributions as dist
+from pyro.nn import PyroModule, PyroSample
+
+class DenseVariational(PyroModule):
+    def __init__(self, in_features, out_features):
+        super().__init__()
+        self.in_features = in_features
+        self.out_features = out_features
+        self.weight = PyroSample(dist.Normal(0., 1.).expand([out_features, in_features]).to_event(2))
+        self.bias = PyroSample(dist.Normal(0., 1.).expand([out_features]).to_event(1))
+
+    def forward(self, x):
+        return torch.matmul(x, self.weight.t()) + self.bias
+
+# ------------------ Model Definitions ------------------ 
 
 
 class LSTMModel(nn.Module):
@@ -90,6 +106,68 @@ class DSTNET(nn.Module):
 
         return out
 
+class DSTNETV2(nn.Module):
+    def __init__(self, input_size, hidden_size=648, num_layers=2, output_size=1, kl_weight=0.0001, dropout=0.4):
+        super().__init__()
+        self.input_size = input_size
+        self.hidden_size = hidden_size
+        self.num_layers = num_layers
+        self.kl_weight = kl_weight
+
+        self.conv1 = nn.Conv1d(
+            in_channels=input_size, 
+            out_channels=32, 
+            kernel_size=1, 
+            padding=0,
+            bias=True
+        )
+        
+        self.lstm = nn.LSTM(
+            32, 
+            hidden_size, 
+            num_layers=num_layers, 
+            batch_first=True
+        )
+
+        self.dropout = nn.Dropout(dropout)
+        
+        self.multihead_attn = nn.MultiheadAttention(
+            hidden_size, 
+            num_heads=4, 
+            dropout=0.5, 
+            batch_first=True
+        )
+        
+        self.dense1 = nn.Linear(hidden_size, 400)
+        self.dense_variational = DenseVariational(400, 100)
+        self.dense2 = nn.Linear(100, output_size)
+
+    def forward(self, x):
+        print(f'Input shape: {x.shape}')
+
+        # Ensure the input tensor is in the correct shape
+        if len(x.shape) == 4:
+            x = x.view(x.size(1), x.size(2), x.size(3))
+            print(f'After unsqueeze: {x.shape}')
+
+        x = x.permute(0, 2, 1)  # Convert to (batch, channels, time)
+        print(f'After permute 1: {x.shape}')
+        x = torch.relu(self.conv1(x))
+        print(f'After conv1: {x.shape}')
+        x = x.permute(0, 2, 1)  # Convert back to (batch, time, channels)
+        print(f'After permute 2: {x.shape}')
+        
+        lstm_out, _ = self.lstm(x)
+        x = self.dropout(lstm_out)
+        
+        attn_output, _ = self.multihead_attn(x, x, x)
+        x = self.dropout(attn_output)
+        
+        x = self.dropout(torch.relu(self.dense1(x[:, -1, :])))
+        x = self.dropout(torch.relu(self.dense_variational(x)))
+        out = self.dense2(x)
+
+        return out
 class LSTMNet(nn.Module):
     def __init__(self, input_size, hidden_size=64, num_layers=2, output_size=1):
         super().__init__()
